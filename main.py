@@ -30,8 +30,8 @@ ctk.set_appearance_mode("Dark")
 ctk.set_default_color_theme("blue")
 
 MONTHS = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند']
-NAV_NORMAL = "#1F2A47"
-NAV_ACTIVE = "#22B8FA"
+NAV_NORMAL = "#1E2344"
+NAV_ACTIVE = "#00C2A8"
 
 def to_persian_num(text):
     if pd.isna(text) or text is None: return ""
@@ -144,13 +144,13 @@ class MammutInsuranceApp(ctk.CTk):
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
 
-        self.sidebar_frame = ctk.CTkFrame(self, width=220, corner_radius=0, fg_color="#16213E")
+        self.sidebar_frame = ctk.CTkFrame(self, width=220, corner_radius=0, fg_color="#141936")
         self.sidebar_frame.grid(row=0, column=0, sticky="nsew")
         self.sidebar_frame.grid_rowconfigure(9, weight=1)
 
-        self.logo_label = ctk.CTkLabel(self.sidebar_frame, text="🐘 بیمه ماموت", font=self.big_font, text_color="#4FC3F7")
+        self.logo_label = ctk.CTkLabel(self.sidebar_frame, text="🐘 بیمه ماموت", font=self.big_font, text_color="#00D9C0")
         self.logo_label.grid(row=0, column=0, padx=20, pady=(30, 0))
-        ctk.CTkLabel(self.sidebar_frame, text="سامانه حسابداری بیمه", font=self.main_font, text_color="#5B6E8C").grid(row=1, column=0, pady=(0, 15))
+        ctk.CTkLabel(self.sidebar_frame, text="سامانه حسابداری بیمه", font=self.main_font, text_color="#64749A").grid(row=1, column=0, pady=(0, 15))
         self.lbl_user = ctk.CTkLabel(self.sidebar_frame, text=f"👤 کاربر جاری: {self.current_user}", font=self.main_font, text_color="#A8B7CE")
         self.lbl_user.grid(row=2, column=0, pady=(0, 20))
 
@@ -168,11 +168,11 @@ class MammutInsuranceApp(ctk.CTk):
             self.nav_buttons[key] = btn
 
         ctk.CTkButton(self.sidebar_frame, text="🔁 تغییر کاربر", font=self.main_font, anchor="e",
-                      fg_color="#2E3F63", hover_color="#5B6E8C", command=self.change_user).grid(row=8, column=0, padx=20, pady=(20, 8), sticky="ew")
+                      fg_color="#2A2F5C", hover_color="#64749A", command=self.change_user).grid(row=8, column=0, padx=20, pady=(20, 8), sticky="ew")
         ctk.CTkButton(self.sidebar_frame, text="🗑️ حذف کلی اطلاعات", font=self.main_font, anchor="e",
-                      fg_color="#F23557", hover_color="#D42A50", command=self.reset_data).grid(row=10, column=0, padx=20, pady=10, sticky="ews")
+                      fg_color="#FF3B5C", hover_color="#E0294F", command=self.reset_data).grid(row=10, column=0, padx=20, pady=10, sticky="ews")
 
-        self.main_frame = ctk.CTkFrame(self, corner_radius=15, fg_color="#1F2A47")
+        self.main_frame = ctk.CTkFrame(self, corner_radius=15, fg_color="#1E2344")
         self.main_frame.grid(row=0, column=1, sticky="nsew", padx=20, pady=20)
 
         self.pending_preview_data = {}
@@ -369,41 +369,41 @@ class MammutInsuranceApp(ctk.CTk):
     def set_active_nav(self, key):
         for k, btn in self.nav_buttons.items():
             if k == key:
-                btn.configure(fg_color=NAV_ACTIVE, hover_color="#1C9BE0")
+                btn.configure(fg_color=NAV_ACTIVE, hover_color="#00A88F")
             else:
-                btn.configure(fg_color=NAV_NORMAL, hover_color="#2E3F63")
+                btn.configure(fg_color=NAV_NORMAL, hover_color="#2A2F5C")
 
     def setup_treeview_style(self):
         style = ttk.Style(self)
         style.theme_use("default")
         style.configure("Treeview",
-                        background="#16213E",
+                        background="#141936",
                         foreground="#F1F5F9",
                         rowheight=40,
-                        fieldbackground="#16213E",
+                        fieldbackground="#141936",
                         borderwidth=0,
                         font=("Vazir", 13))
-        style.map('Treeview', background=[('selected', '#2554C7')]) # رنگ بک‌گراند ردیف انتخاب شده (آبی تیره)
+        style.map('Treeview', background=[('selected', '#3B6FE0')]) # رنگ بک‌گراند ردیف انتخاب شده (آبی تیره)
         style.configure("Treeview.Heading",
-                        background="#1F2A47",
-                        foreground="#4FC3F7",
+                        background="#1E2344",
+                        foreground="#00D9C0",
                         font=("Vazir", 14, "bold"),
                         borderwidth=1,
                         relief="flat")
-        style.map("Treeview.Heading", background=[('active', '#2E3F63')])
+        style.map("Treeview.Heading", background=[('active', '#2A2F5C')])
 
     def clear_main_frame(self):
         for widget in self.main_frame.winfo_children(): widget.destroy()
 
     def create_glass_card(self, parent, icon, title, value, color):
-        f = ctk.CTkFrame(parent, fg_color="#2E3F63", corner_radius=15, border_width=1, border_color=color)
+        f = ctk.CTkFrame(parent, fg_color="#2A2F5C", corner_radius=15, border_width=1, border_color=color)
         f.pack(side="left", fill="both", expand=True, padx=10)
         ctk.CTkLabel(f, text=f"{icon} {title}", font=self.main_font, text_color="#CBD5E1").pack(pady=(15, 5))
         ctk.CTkLabel(f, text=value, font=self.big_font, text_color=color).pack(pady=(0, 15))
 
     def apply_row_stripes(self, tree):
-        tree.tag_configure("stripe_even", background="#16213E")
-        tree.tag_configure("stripe_odd", background="#1B2848")
+        tree.tag_configure("stripe_even", background="#141936")
+        tree.tag_configure("stripe_odd", background="#1C2142")
 
     def get_period(self, d_str):
         cutoff = int(self.config.get("cutoff_day", 25))
@@ -488,15 +488,14 @@ class MammutInsuranceApp(ctk.CTk):
             tree.heading(c, command=lambda c=c: sort_by(c))
 
     def handle_tree_click(self, event, tree):
+        """با کلیک روی هر جای ردیف (نه فقط ستون تیک)، وضعیت انتخاب (☐/☑) همان ردیف را عوض می‌کند."""
         region = tree.identify_region(event.x, event.y)
         if region == "cell":
-            col = tree.identify_column(event.x)
-            if col == "#1":
-                iid = tree.identify_row(event.y)
-                if iid:
-                    vals = list(tree.item(iid, "values"))
-                    vals[0] = "☑" if vals[0] == "☐" else "☐"
-                    tree.item(iid, values=vals)
+            iid = tree.identify_row(event.y)
+            if iid:
+                vals = list(tree.item(iid, "values"))
+                vals[0] = "☑" if vals[0] == "☐" else "☐"
+                tree.item(iid, values=vals)
 
     def select_row_under_cursor(self, event, tree):
         """پیش از باز کردن منوی کلیک راست، ردیف زیر ماوس را (اگر جدول قابلیت انتخاب داشته باشد) هایلایت می‌کند."""
@@ -640,7 +639,7 @@ class MammutInsuranceApp(ctk.CTk):
         diag = Toplevel(self)
         diag.title("صدور صورت‌حساب")
         diag.geometry("480x520")
-        diag.configure(bg="#1F2A47")
+        diag.configure(bg="#1E2344")
         diag.transient(self)
         diag.grab_set()
 
@@ -701,7 +700,7 @@ class MammutInsuranceApp(ctk.CTk):
             except Exception as e:
                 logging.exception("خطا در صدور صورت‌حساب")
                 messagebox.showerror("خطا", str(e), parent=diag)
-        ctk.CTkButton(diag, text="🧾 تولید فایل (Word + PDF)", font=self.title_font, fg_color="#FF7A29", command=generate).pack(pady=30)
+        ctk.CTkButton(diag, text="🧾 تولید فایل (Word + PDF)", font=self.title_font, fg_color="#FF5F1F", command=generate).pack(pady=30)
 
     def period_to_year_month(self, period):
         """رشتهٔ دوره مثل 'شهریور 1404' را به (سال, ماه) تفکیک می‌کند تا در بایگانی پوشهٔ سال/ماه ساخته شود."""
@@ -801,16 +800,16 @@ class MammutInsuranceApp(ctk.CTk):
 
         tf = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         tf.pack(fill="x", pady=10, padx=10)
-        self.create_glass_card(tf, "📄", "کل بیمه‌نامه‌ها", to_persian_num(str(tot_pols)), "#4FC3F7")
-        self.create_glass_card(tf, "🗓️", "بیمه‌های دوره جاری", to_persian_num(str(cur_pols)), "#5EEAA0")
-        self.create_glass_card(tf, "🏢", "شرکت‌های فعال", to_persian_num(str(tot_comps)), "#FFD866")
+        self.create_glass_card(tf, "📄", "کل بیمه‌نامه‌ها", to_persian_num(str(tot_pols)), "#00D9C0")
+        self.create_glass_card(tf, "🗓️", "بیمه‌های دوره جاری", to_persian_num(str(cur_pols)), "#00E676")
+        self.create_glass_card(tf, "🏢", "شرکت‌های فعال", to_persian_num(str(tot_comps)), "#FFC107")
 
         bf = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         bf.pack(fill="x", pady=5, padx=10)
-        ctk.CTkButton(bf, text="🧾 ایجاد صورت‌حساب", fg_color="#FF7A29", font=self.main_font, command=self.open_invoice_dialog).pack(side="right", padx=5)
-        ctk.CTkButton(bf, text="💳 تسویه اقساط انتخابی", fg_color="#22B573", font=self.main_font, command=self.open_payment_dialog).pack(side="right", padx=5)
-        ctk.CTkButton(bf, text="🏦 واریز پاسارگاد", fg_color="#A855F7", font=self.main_font, command=self.mark_pasargad).pack(side="right", padx=5)
-        ctk.CTkButton(bf, text="📑 اکسل پرداخت‌ها", fg_color="#1C9BE0", font=self.main_font, command=lambda: os.startfile(self.payments_excel_path) if os.path.exists(self.payments_excel_path) else None).pack(side="left", padx=5)
+        ctk.CTkButton(bf, text="🧾 ایجاد صورت‌حساب", fg_color="#FF5F1F", font=self.main_font, command=self.open_invoice_dialog).pack(side="right", padx=5)
+        ctk.CTkButton(bf, text="💳 تسویه اقساط انتخابی", fg_color="#17B978", font=self.main_font, command=self.open_payment_dialog).pack(side="right", padx=5)
+        ctk.CTkButton(bf, text="🏦 واریز پاسارگاد", fg_color="#9C6BFF", font=self.main_font, command=self.mark_pasargad).pack(side="right", padx=5)
+        ctk.CTkButton(bf, text="📑 اکسل پرداخت‌ها", fg_color="#29B6F6", font=self.main_font, command=lambda: os.startfile(self.payments_excel_path) if os.path.exists(self.payments_excel_path) else None).pack(side="left", padx=5)
 
         self.tabview = ctk.CTkTabview(self.main_frame)
         self.tabview.pack(fill="both", expand=True, padx=10, pady=5)
@@ -820,7 +819,7 @@ class MammutInsuranceApp(ctk.CTk):
         self.tab_det = self.tabview.add("جزئی (تفکیکی)")
 
         # فیلترهای بالا
-        ff = ctk.CTkFrame(self.main_frame, fg_color="#16213E", corner_radius=10)
+        ff = ctk.CTkFrame(self.main_frame, fg_color="#141936", corner_radius=10)
         ff.pack(fill="x", padx=10, pady=5)
 
         self.status_filter = ctk.StringVar(value="پرداخت نشده")
@@ -890,9 +889,9 @@ class MammutInsuranceApp(ctk.CTk):
 
         for t in [self.tree_comp, self.tree_det]:
             # رنگ‌های جدید و روشن‌تر برای خوانایی بهتر روی پس زمینه تیره
-            t.tag_configure("unpaid", foreground="#FF7B87") # قرمز روشن
-            t.tag_configure("paid", foreground="#5EEAA0") # سبز روشن
-            t.tag_configure("pasargad", foreground="#D0A6FF") # بنفش
+            t.tag_configure("unpaid", foreground="#FF5C77") # قرمز روشن
+            t.tag_configure("paid", foreground="#00E676") # سبز روشن
+            t.tag_configure("pasargad", foreground="#C792FF") # بنفش
             self.apply_row_stripes(t)
             t.bind("<ButtonRelease-1>", lambda e, tree=t: self.handle_tree_click(e, tree))
             t.bind("<Button-3>", lambda e, tree=t: self.handle_right_click_checkbox(e, tree))
@@ -973,15 +972,15 @@ class MammutInsuranceApp(ctk.CTk):
         diag = Toplevel(self)
         diag.title(f"ریز اقساط: {comp} - قسط {to_persian_num(str(i_num))}")
         diag.geometry("900x450")
-        diag.configure(bg="#1F2A47")
+        diag.configure(bg="#1E2344")
         diag.transient(self)
 
         cols = ("بیمه‌گذار", "شماره بیمه", "سررسید", "مبلغ (ریال)", "وضعیت")
         ts = ttk.Treeview(diag, columns=cols, show="headings")
         for c in cols: ts.heading(c, text=c)
-        ts.tag_configure("unpaid", foreground="#FF7B87")
-        ts.tag_configure("paid", foreground="#5EEAA0")
-        ts.tag_configure("pasargad", foreground="#D0A6FF")
+        ts.tag_configure("unpaid", foreground="#FF5C77")
+        ts.tag_configure("paid", foreground="#00E676")
+        ts.tag_configure("pasargad", foreground="#C792FF")
         self.apply_row_stripes(ts)
 
         sb = ttk.Scrollbar(diag, orient="vertical", command=ts.yview)
@@ -1091,18 +1090,18 @@ class MammutInsuranceApp(ctk.CTk):
         diag = Toplevel(self)
         diag.title("ثبت پرداختی و تسویه")
         diag.geometry("560x680")
-        diag.configure(bg="#1F2A47")
+        diag.configure(bg="#1E2344")
         diag.transient(self)
         diag.grab_set()
 
-        amt_card = ctk.CTkFrame(diag, fg_color="#2E3F63", corner_radius=15, border_width=1, border_color="#22B573")
+        amt_card = ctk.CTkFrame(diag, fg_color="#2A2F5C", corner_radius=15, border_width=1, border_color="#17B978")
         amt_card.pack(fill="x", padx=20, pady=(20, 10))
         lbl_amt_title = ctk.CTkLabel(amt_card, text="💰 مبلغ کل انتخابی", font=self.main_font, text_color="#CBD5E1")
         lbl_amt_title.pack(pady=(12, 2))
-        lbl_amt_value = ctk.CTkLabel(amt_card, text=f"{to_persian_num(f'{tot_amt:,}')} ریال", font=self.big_font, text_color="#5EEAA0")
+        lbl_amt_value = ctk.CTkLabel(amt_card, text=f"{to_persian_num(f'{tot_amt:,}')} ریال", font=self.big_font, text_color="#00E676")
         lbl_amt_value.pack(pady=(0, 12))
 
-        mode_card = ctk.CTkFrame(diag, fg_color="#16213E", corner_radius=12)
+        mode_card = ctk.CTkFrame(diag, fg_color="#141936", corner_radius=12)
         mode_card.pack(fill="x", padx=20, pady=8)
         pay_mode = ctk.StringVar(value="full")
 
@@ -1112,14 +1111,14 @@ class MammutInsuranceApp(ctk.CTk):
                 remaining = tot_amt - entered
                 lbl_amt_title.configure(text="🧮 مبلغ باقیمانده پس از این پرداخت")
                 if entered <= 0:
-                    lbl_amt_value.configure(text=f"{to_persian_num(f'{tot_amt:,}')} ریال", text_color="#FFD866")
+                    lbl_amt_value.configure(text=f"{to_persian_num(f'{tot_amt:,}')} ریال", text_color="#FFC107")
                 elif remaining <= 0:
-                    lbl_amt_value.configure(text="مبلغ از کل بیشتر است!", text_color="#FF7B87")
+                    lbl_amt_value.configure(text="مبلغ از کل بیشتر است!", text_color="#FF5C77")
                 else:
-                    lbl_amt_value.configure(text=f"{to_persian_num(f'{remaining:,}')} ریال", text_color="#FFD866")
+                    lbl_amt_value.configure(text=f"{to_persian_num(f'{remaining:,}')} ریال", text_color="#FFC107")
             else:
                 lbl_amt_title.configure(text="💰 مبلغ کل انتخابی")
-                lbl_amt_value.configure(text=f"{to_persian_num(f'{tot_amt:,}')} ریال", text_color="#5EEAA0")
+                lbl_amt_value.configure(text=f"{to_persian_num(f'{tot_amt:,}')} ریال", text_color="#00E676")
 
         def toggle_ent():
             ent_amt.configure(state="normal" if pay_mode.get() == "partial" else "disabled")
@@ -1150,7 +1149,7 @@ class MammutInsuranceApp(ctk.CTk):
             ctk.CTkLabel(mode_card, text="در پرداخت ناقصِ گروهی، مبلغ به‌ترتیب شناسه روی اقساط زیرمجموعه اعمال می‌شود؛ باقیمانده به‌صورت قسط جدید و پرداخت‌نشده باقی می‌ماند.",
                          font=self.main_font, text_color="#A8B7CE", wraplength=470, justify="right").pack(padx=20, pady=(0, 12))
 
-        details_card = ctk.CTkFrame(diag, fg_color="#16213E", corner_radius=12)
+        details_card = ctk.CTkFrame(diag, fg_color="#141936", corner_radius=12)
         details_card.pack(fill="x", padx=20, pady=8)
         ctk.CTkLabel(details_card, text="نوع پرداخت:", font=self.main_font).pack(pady=(12, 0))
         p_type = ctk.StringVar(value="فیش بانکی")
@@ -1166,10 +1165,10 @@ class MammutInsuranceApp(ctk.CTk):
             paths = filedialog.askopenfilenames()
             if paths:
                 self.cur_receipts.extend(paths)
-                lbl_file.configure(text=f"📎 {len(self.cur_receipts)} فایل انتخاب شد", text_color="#5EEAA0")
-        receipt_card = ctk.CTkFrame(diag, fg_color="#16213E", corner_radius=12)
+                lbl_file.configure(text=f"📎 {len(self.cur_receipts)} فایل انتخاب شد", text_color="#00E676")
+        receipt_card = ctk.CTkFrame(diag, fg_color="#141936", corner_radius=12)
         receipt_card.pack(fill="x", padx=20, pady=8)
-        ctk.CTkButton(receipt_card, text="📎 انتخاب تصویر فیش/رسید", font=self.main_font, fg_color="#1C9BE0", command=sel_file).pack(pady=(12, 5))
+        ctk.CTkButton(receipt_card, text="📎 انتخاب تصویر فیش/رسید", font=self.main_font, fg_color="#29B6F6", command=sel_file).pack(pady=(12, 5))
         lbl_file = ctk.CTkLabel(receipt_card, text="سندی انتخاب نشده", font=self.main_font, text_color="gray")
         lbl_file.pack(pady=(0, 12))
 
@@ -1223,7 +1222,7 @@ class MammutInsuranceApp(ctk.CTk):
             diag.destroy()
             messagebox.showinfo("موفق", "پرداختی ثبت شد.")
 
-        ctk.CTkButton(diag, text="✅ تایید نهایی", fg_color="#22B573", font=self.title_font, command=commit).pack(pady=20)
+        ctk.CTkButton(diag, text="✅ تایید نهایی", fg_color="#17B978", font=self.title_font, command=commit).pack(pady=20)
 
     def mark_pasargad(self):
         active = self.tabview.get()
@@ -1416,7 +1415,7 @@ class MammutInsuranceApp(ctk.CTk):
             if ftype == 'b': self.lbl_b_file = lbl
             else: self.lbl_s_file = lbl
 
-        opt_f = ctk.CTkFrame(self.main_frame, fg_color="#16213E", corner_radius=10)
+        opt_f = ctk.CTkFrame(self.main_frame, fg_color="#141936", corner_radius=10)
         opt_f.pack(pady=10)
         ctk.CTkLabel(opt_f, text="تعداد اقساط برای هر بیمه‌نامه:", font=self.main_font).pack(side="right", padx=10, pady=10)
         self.ent_inst_count = ctk.CTkEntry(opt_f, font=self.main_font, width=80)
@@ -1427,12 +1426,12 @@ class MammutInsuranceApp(ctk.CTk):
 
         bf = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         bf.pack(pady=15)
-        ctk.CTkButton(bf, text="⚡ پیش‌پردازش فایل‌ها", font=self.title_font, fg_color="#FF7A29", command=self.run_preview).pack(side="right", padx=10)
-        ctk.CTkButton(bf, text="➕ افزودن دستی", font=self.title_font, fg_color="#1C9BE0", command=self.add_manual_row).pack(side="left", padx=10)
+        ctk.CTkButton(bf, text="⚡ پیش‌پردازش فایل‌ها", font=self.title_font, fg_color="#FF5F1F", command=self.run_preview).pack(side="right", padx=10)
+        ctk.CTkButton(bf, text="➕ افزودن دستی", font=self.title_font, fg_color="#29B6F6", command=self.add_manual_row).pack(side="left", padx=10)
 
-        self.preview_scroll = ctk.CTkScrollableFrame(self.main_frame, fg_color="#16213E")
+        self.preview_scroll = ctk.CTkScrollableFrame(self.main_frame, fg_color="#141936")
         self.preview_scroll.pack(fill="both", expand=True, padx=20, pady=10)
-        self.btn_commit = ctk.CTkButton(self.main_frame, text="✅ پردازش نهایی", font=self.title_font, fg_color="#22B573", command=self.commit_processing, state="disabled")
+        self.btn_commit = ctk.CTkButton(self.main_frame, text="✅ پردازش نهایی", font=self.title_font, fg_color="#17B978", command=self.commit_processing, state="disabled")
         self.btn_commit.pack(pady=10)
         self.render_preview_ui()
 
@@ -1450,7 +1449,7 @@ class MammutInsuranceApp(ctk.CTk):
         diag = Toplevel(self)
         diag.title("افزودن ردیف")
         diag.geometry("450x650")
-        diag.configure(bg="#1F2A47")
+        diag.configure(bg="#1E2344")
         diag.transient(self)
 
         fields = [("نام شرکت:", "company"), ("بیمه‌گذار:", "name"), ("شماره بیمه:", "policy_no"), ("حق بیمه:", "premium"), ("تاریخ صدور:", "date"),
@@ -1488,13 +1487,13 @@ class MammutInsuranceApp(ctk.CTk):
             })
             self.render_preview_ui()
             diag.destroy()
-        ctk.CTkButton(diag, text="ثبت", fg_color="#22B573", font=self.main_font, command=save).pack(pady=20)
+        ctk.CTkButton(diag, text="ثبت", fg_color="#17B978", font=self.main_font, command=save).pack(pady=20)
 
     def edit_preview_company(self, comp):
         diag = Toplevel(self)
         diag.title(f"ویرایش: {comp}")
         diag.geometry("1100x600")
-        diag.configure(bg="#1F2A47")
+        diag.configure(bg="#1E2344")
         diag.transient(self)
 
         top_bar = ctk.CTkFrame(diag, fg_color="transparent")
@@ -1508,16 +1507,16 @@ class MammutInsuranceApp(ctk.CTk):
                 item['extra'].setdefault(fname, "")
             diag.destroy()
             self.edit_preview_company(comp)
-        ctk.CTkButton(top_bar, text="➕ افزودن فیلد جدید", fg_color="#1C9BE0", font=self.main_font, command=add_field).pack(side="left", padx=5)
+        ctk.CTkButton(top_bar, text="➕ افزودن فیلد جدید", fg_color="#29B6F6", font=self.main_font, command=add_field).pack(side="left", padx=5)
 
-        sf = ctk.CTkScrollableFrame(diag, fg_color="#16213E")
+        sf = ctk.CTkScrollableFrame(diag, fg_color="#141936")
         sf.pack(fill="both", expand=True, padx=10, pady=10)
 
         extra_keys = sorted({k for item in self.pending_preview_data[comp] for k in item.get('extra', {}).keys()})
         header = ctk.CTkFrame(sf, fg_color="transparent")
         header.pack(fill="x", pady=(0, 5))
         for lbl in reversed(["نوع", "بیمه‌گذار", "شماره بیمه", "حق بیمه", "تاریخ", "نام پرسنل", "شماره پرسنلی", "شماره ملی"] + extra_keys):
-            ctk.CTkLabel(header, text=lbl, font=self.main_font, width=110, text_color="#4FC3F7").pack(side="right", padx=2)
+            ctk.CTkLabel(header, text=lbl, font=self.main_font, width=110, text_color="#00D9C0").pack(side="right", padx=2)
 
         elist = []
         for item in self.pending_preview_data[comp]:
@@ -1555,7 +1554,7 @@ class MammutInsuranceApp(ctk.CTk):
                     item['extra'][k] = ex.get().strip()
             self.render_preview_ui()
             diag.destroy()
-        ctk.CTkButton(diag, text="ذخیره", fg_color="#22B573", font=self.main_font, command=save_e).pack(pady=10)
+        ctk.CTkButton(diag, text="ذخیره", fg_color="#17B978", font=self.main_font, command=save_e).pack(pady=10)
 
     def render_preview_ui(self):
         for w in self.preview_scroll.winfo_children(): w.destroy()
@@ -1567,12 +1566,12 @@ class MammutInsuranceApp(ctk.CTk):
         for comp, items in list(self.pending_preview_data.items()):
             if not items:
                 del self.pending_preview_data[comp]; continue
-            f = ctk.CTkFrame(self.preview_scroll, fg_color="#2E3F63")
+            f = ctk.CTkFrame(self.preview_scroll, fg_color="#2A2F5C")
             f.pack(fill="x", pady=5, padx=5)
             t_prem = sum(i['premium'] for i in items)
-            ctk.CTkLabel(f, text=f"{to_persian_num(comp)} | {to_persian_num(str(len(items)))} مورد | {to_persian_num(f'{t_prem:,}')} ریال", font=self.main_font, text_color="#5EEAA0").pack(side="right", padx=10, pady=10)
-            ctk.CTkButton(f, text="حذف", fg_color="#F23557", width=60, font=self.main_font, command=lambda c=comp: [self.pending_preview_data.pop(c), self.render_preview_ui()]).pack(side="left", padx=5)
-            ctk.CTkButton(f, text="ویرایش", fg_color="#1C9BE0", width=60, font=self.main_font, command=lambda c=comp: self.edit_preview_company(c)).pack(side="left", padx=5)
+            ctk.CTkLabel(f, text=f"{to_persian_num(comp)} | {to_persian_num(str(len(items)))} مورد | {to_persian_num(f'{t_prem:,}')} ریال", font=self.main_font, text_color="#00E676").pack(side="right", padx=10, pady=10)
+            ctk.CTkButton(f, text="حذف", fg_color="#FF3B5C", width=60, font=self.main_font, command=lambda c=comp: [self.pending_preview_data.pop(c), self.render_preview_ui()]).pack(side="left", padx=5)
+            ctk.CTkButton(f, text="ویرایش", fg_color="#29B6F6", width=60, font=self.main_font, command=lambda c=comp: self.edit_preview_company(c)).pack(side="left", padx=5)
 
     def run_preview(self):
         tc = [clean_contract_number(t) for t in self.config.get("target_contracts", [])]
@@ -1668,7 +1667,7 @@ class MammutInsuranceApp(ctk.CTk):
         ctk.CTkLabel(self.main_frame, text="برای رهگیری اینکه چه کسی در برنامه چه عملیاتی انجام داده است.",
                      font=self.main_font, text_color="#A8B7CE").pack(anchor="e", padx=15, pady=(0, 10))
 
-        ff = ctk.CTkFrame(self.main_frame, fg_color="#16213E", corner_radius=10)
+        ff = ctk.CTkFrame(self.main_frame, fg_color="#141936", corner_radius=10)
         ff.pack(fill="x", padx=10, pady=5)
         search_var = ctk.StringVar()
         ctk.CTkLabel(ff, text="جستجوی کاربر/عملیات:", font=self.main_font).pack(side="right", padx=5, pady=5)
@@ -1680,8 +1679,8 @@ class MammutInsuranceApp(ctk.CTk):
         tree = ttk.Treeview(tree_f, columns=cols, show="headings", selectmode="browse")
         for c in cols: tree.heading(c, text=c)
         self.make_sortable(tree, cols)
-        tree.tag_configure("stripe_even", background="#16213E")
-        tree.tag_configure("stripe_odd", background="#1B2848")
+        tree.tag_configure("stripe_even", background="#141936")
+        tree.tag_configure("stripe_odd", background="#1C2142")
         vs = ttk.Scrollbar(tree_f, orient="vertical", command=tree.yview)
         tree.configure(yscrollcommand=vs.set)
         vs.pack(side="right", fill="y")
@@ -1726,9 +1725,9 @@ class MammutInsuranceApp(ctk.CTk):
         tree = ttk.Treeview(tree_f, columns=cols, show="headings", selectmode="browse")
         for c in cols: tree.heading(c, text=c)
         self.make_sortable(tree, cols)
-        tree.tag_configure("stripe_even", background="#16213E")
-        tree.tag_configure("stripe_odd", background="#1B2848")
-        tree.tag_configure("has_paid", foreground="#5EEAA0")
+        tree.tag_configure("stripe_even", background="#141936")
+        tree.tag_configure("stripe_odd", background="#1C2142")
+        tree.tag_configure("has_paid", foreground="#00E676")
         tree.tag_configure("clean", foreground="#F1F5F9")
         vs = ttk.Scrollbar(tree_f, orient="vertical", command=tree.yview)
         tree.configure(yscrollcommand=vs.set)
@@ -1773,14 +1772,14 @@ class MammutInsuranceApp(ctk.CTk):
 
         bf = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         bf.pack(pady=10)
-        ctk.CTkButton(bf, text="✏️ ویرایش بیمه‌نامه انتخابی", fg_color="#1C9BE0", font=self.main_font, command=open_edit).pack(side="right", padx=5)
+        ctk.CTkButton(bf, text="✏️ ویرایش بیمه‌نامه انتخابی", fg_color="#29B6F6", font=self.main_font, command=open_edit).pack(side="right", padx=5)
 
         def do_delete():
             sel = tree.selection()
             if not sel: return messagebox.showwarning("هشدار", "یک ردیف را انتخاب کنید.")
             self.delete_policy(int(sel[0]))
             reload()
-        ctk.CTkButton(bf, text="🗑️ حذف بیمه‌نامه انتخابی", fg_color="#F23557", hover_color="#D42A50", font=self.main_font, command=do_delete).pack(side="right", padx=5)
+        ctk.CTkButton(bf, text="🗑️ حذف بیمه‌نامه انتخابی", fg_color="#FF3B5C", hover_color="#E0294F", font=self.main_font, command=do_delete).pack(side="right", padx=5)
 
         reload()
 
@@ -1799,7 +1798,7 @@ class MammutInsuranceApp(ctk.CTk):
         diag = Toplevel(self)
         diag.title(f"ویرایش بیمه‌نامه {policy_no}")
         diag.geometry("500x700")
-        diag.configure(bg="#1F2A47")
+        diag.configure(bg="#1E2344")
         diag.transient(self)
         diag.grab_set()
 
@@ -1825,7 +1824,7 @@ class MammutInsuranceApp(ctk.CTk):
 
         if has_payment:
             ctk.CTkLabel(diag, text="⚠️ این بیمه‌نامه دارای قسط پرداخت‌شده/واریزی است؛ تغییر حق بیمه به‌تنهایی اقساط را بازسازی نمی‌کند.",
-                         font=self.main_font, text_color="#FFD866", wraplength=440, justify="right").pack(padx=20, pady=(10, 0))
+                         font=self.main_font, text_color="#FFC107", wraplength=440, justify="right").pack(padx=20, pady=(10, 0))
 
         def save():
             new_pno = clean_text_advanced(ents["policy_no"].get())
@@ -1876,8 +1875,8 @@ class MammutInsuranceApp(ctk.CTk):
 
         bf = ctk.CTkFrame(diag, fg_color="transparent")
         bf.pack(pady=20)
-        ctk.CTkButton(bf, text="💾 ذخیره تغییرات", fg_color="#22B573", font=self.main_font, command=save).pack(side="right", padx=5)
-        rebuild_btn = ctk.CTkButton(bf, text="🔁 بازسازی اقساط", fg_color="#A855F7", font=self.main_font, command=rebuild)
+        ctk.CTkButton(bf, text="💾 ذخیره تغییرات", fg_color="#17B978", font=self.main_font, command=save).pack(side="right", padx=5)
+        rebuild_btn = ctk.CTkButton(bf, text="🔁 بازسازی اقساط", fg_color="#9C6BFF", font=self.main_font, command=rebuild)
         rebuild_btn.pack(side="right", padx=5)
         if has_payment:
             rebuild_btn.configure(state="disabled")
@@ -1916,7 +1915,7 @@ class MammutInsuranceApp(ctk.CTk):
         ctk.CTkLabel(s, text="⚙️ تنظیمات سیستم", font=self.title_font).pack(pady=10)
 
         # بخش الزام تسویه پیوسته
-        f_sq = ctk.CTkFrame(s, fg_color="#2E3F63", corner_radius=10)
+        f_sq = ctk.CTkFrame(s, fg_color="#2A2F5C", corner_radius=10)
         f_sq.pack(fill="x", pady=10, padx=20)
         ctk.CTkLabel(f_sq, text="قانون تسویه پیوسته اقساط:", font=self.main_font).pack(side="right", padx=10, pady=10)
         self.var_sq = ctk.StringVar(value=self.config.get("enforce_sequential_payment", "فعال"))
@@ -1924,7 +1923,7 @@ class MammutInsuranceApp(ctk.CTk):
         cb_sq.pack(side="right", padx=10, pady=10)
 
         # بخش روش محاسبه اقساط
-        f_calc = ctk.CTkFrame(s, fg_color="#2E3F63", corner_radius=10)
+        f_calc = ctk.CTkFrame(s, fg_color="#2A2F5C", corner_radius=10)
         f_calc.pack(fill="x", pady=10, padx=20)
         ctk.CTkLabel(f_calc, text="روش محاسبه اقساط:", font=self.main_font).pack(side="right", padx=10, pady=10)
         self.var_calc = ctk.StringVar(value=self.config.get("installment_calc_method", "راحت"))
@@ -1955,18 +1954,40 @@ class MammutInsuranceApp(ctk.CTk):
         self.txt_cont = ctk.CTkTextbox(s, font=self.main_font, height=80)
         self.txt_cont.pack(fill="x", padx=50)
         self.txt_cont.insert("0.0", "\n".join(self.config.get("target_contracts", [])))
-        ctk.CTkButton(s, text="💾 ذخیره تنظیمات", font=self.main_font, fg_color="#22B573", command=self.save_config).pack(pady=20)
+        ctk.CTkButton(s, text="💾 ذخیره تنظیمات", font=self.main_font, fg_color="#17B978", command=self.save_config).pack(pady=20)
 
-        f_pw = ctk.CTkFrame(s, fg_color="#2E3F63", corner_radius=10)
+        f_pw = ctk.CTkFrame(s, fg_color="#2A2F5C", corner_radius=10)
         f_pw.pack(fill="x", pady=10, padx=20)
         ctk.CTkLabel(f_pw, text="رمز مدیریت (برای تغییر کاربر و حذف کلی اطلاعات):", font=self.main_font).pack(side="right", padx=10, pady=10)
-        ctk.CTkButton(f_pw, text="🔑 تغییر رمز مدیریت", font=self.main_font, fg_color="#FF7A29", command=self.change_admin_password).pack(side="right", padx=10, pady=10)
+        ctk.CTkButton(f_pw, text="🔑 تغییر رمز مدیریت", font=self.main_font, fg_color="#FF5F1F", command=self.change_admin_password).pack(side="right", padx=10, pady=10)
 
-        ctk.CTkLabel(s, text="راهنمای متغیرهای قابل استفاده در قالب Word صورت‌حساب:", font=self.main_font, text_color="#4FC3F7").pack(pady=(20, 5))
-        help_text = ("[نام_شرکت]  [دوره]  [شماره_صورتحساب]  [تاریخ_صدور]  [مبلغ_کل]  [تعداد_ردیف]\n"
-                     "این کدها را داخل متن فایل Word خود بنویسید؛ برنامه هنگام صدور صورت‌حساب آن‌ها را با مقدار واقعی جایگزین می‌کند.\n"
-                     "کد [جدول] را هرجای متن که می‌خواهید جدول ردیف‌ها دقیقاً همان‌جا درج شود بنویسید؛ اگر ننویسید، جدول خودکار به انتهای سند اضافه می‌شود.")
-        ctk.CTkLabel(s, text=help_text, font=self.main_font, text_color="#A8B7CE", justify="center").pack(pady=(0, 20))
+        tmpl_card = ctk.CTkFrame(s, fg_color="#2A2F5C", corner_radius=12)
+        tmpl_card.pack(fill="x", padx=20, pady=(20, 20))
+        ctk.CTkLabel(tmpl_card, text="📄 راهنمای کدهای قالب Word صورت‌حساب", font=self.title_font, text_color="#00D9C0").pack(pady=(15, 2))
+        ctk.CTkLabel(tmpl_card,
+                     text="این کدها را هرجای متن فایل Word خودتان (پوشهٔ Data/Template) بنویسید؛ برنامه هنگام صدور صورت‌حساب آن‌ها را با مقدار واقعی جایگزین می‌کند:",
+                     font=self.main_font, text_color="#A8B7CE", wraplength=850, justify="right").pack(padx=15, pady=(0, 12))
+
+        tmpl_codes = [
+            ("[نام_شرکت]", "نام شرکت (در صورت‌حساب گروهی: «گروه صنعتی ماموت»)"),
+            ("[دوره]", "دورهٔ انتخاب‌شده، مثل «شهریور 1404»"),
+            ("[شماره_صورتحساب]", "شمارهٔ ترتیبی صورت‌حساب، مثل «22562-05-0001»"),
+            ("[تاریخ_صدور]", "تاریخ امروز به شمسی"),
+            ("[مبلغ_کل]", "جمع مبلغ صورت‌حساب (ریال)"),
+            ("[تعداد_ردیف]", "تعداد ردیف‌های جدول (تعداد بیمه‌نامه در نوع تفکیکی، یا تعداد شرکت‌ها در نوع گروهی)"),
+            ("[جدول]", "محل دقیق درج جدول ردیف‌ها. اگر این کد را ننویسید، جدول به‌صورت خودکار به انتهای سند اضافه می‌شود."),
+        ]
+        for code, desc in tmpl_codes:
+            row = ctk.CTkFrame(tmpl_card, fg_color="#1E2344", corner_radius=8)
+            row.pack(fill="x", padx=20, pady=3)
+            ctk.CTkLabel(row, text=code, font=ctk.CTkFont(family="Consolas", size=13, weight="bold"),
+                         text_color="#00D9C0", width=180, anchor="e").pack(side="right", padx=(5, 10), pady=8)
+            ctk.CTkLabel(row, text=desc, font=self.main_font, text_color="#F1F5F9", anchor="e",
+                         wraplength=580, justify="right").pack(side="right", fill="x", expand=True, padx=(10, 5), pady=8)
+
+        ctk.CTkLabel(tmpl_card,
+                     text="نیازی به ساختن جدول در قالب نیست؛ برنامه خودش جدول را با ستون‌های مناسبِ همان نوع صورت‌حساب می‌سازد.",
+                     font=self.main_font, text_color="#A8B7CE", wraplength=850, justify="right").pack(padx=15, pady=(8, 15))
 
     def save_config(self):
         for k, e in self.entries.items(): self.config[k] = e.get().strip()
