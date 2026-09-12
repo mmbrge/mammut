@@ -146,7 +146,7 @@ class MammutInsuranceApp(ctk.CTk):
 
         self.sidebar_frame = ctk.CTkFrame(self, width=220, corner_radius=0, fg_color="#0F172A")
         self.sidebar_frame.grid(row=0, column=0, sticky="nsew")
-        self.sidebar_frame.grid_rowconfigure(8, weight=1)
+        self.sidebar_frame.grid_rowconfigure(9, weight=1)
 
         self.logo_label = ctk.CTkLabel(self.sidebar_frame, text="🐘 بیمه ماموت", font=self.big_font, text_color="#38BDF8")
         self.logo_label.grid(row=0, column=0, padx=20, pady=(30, 0))
@@ -157,6 +157,7 @@ class MammutInsuranceApp(ctk.CTk):
         menus = [
             ("dash", "📊 داشبورد و پرداخت‌ها", self.show_dashboard),
             ("proc", "📥 وارد کردن اطلاعات", self.show_processing),
+            ("manage", "🗂️ مدیریت بیمه‌نامه‌ها", self.show_policy_manager),
             ("log", "🕒 تاریخچه فعالیت‌ها", self.show_activity_log),
             ("set", "⚙️ تنظیمات سیستم", self.show_settings),
         ]
@@ -167,9 +168,9 @@ class MammutInsuranceApp(ctk.CTk):
             self.nav_buttons[key] = btn
 
         ctk.CTkButton(self.sidebar_frame, text="🔁 تغییر کاربر", font=self.main_font, anchor="e",
-                      fg_color="#334155", hover_color="#475569", command=self.change_user).grid(row=7, column=0, padx=20, pady=(20, 8), sticky="ew")
+                      fg_color="#334155", hover_color="#475569", command=self.change_user).grid(row=8, column=0, padx=20, pady=(20, 8), sticky="ew")
         ctk.CTkButton(self.sidebar_frame, text="🗑️ حذف کلی اطلاعات", font=self.main_font, anchor="e",
-                      fg_color="#E11D48", hover_color="#BE123C", command=self.reset_data).grid(row=9, column=0, padx=20, pady=10, sticky="ews")
+                      fg_color="#E11D48", hover_color="#BE123C", command=self.reset_data).grid(row=10, column=0, padx=20, pady=10, sticky="ews")
 
         self.main_frame = ctk.CTkFrame(self, corner_radius=15, fg_color="#1E293B")
         self.main_frame.grid(row=0, column=1, sticky="nsew", padx=20, pady=20)
@@ -1493,6 +1494,207 @@ class MammutInsuranceApp(ctk.CTk):
 
         search_var.trace_add("write", reload)
         reload()
+
+    # ================= مدیریت بیمه‌نامه‌ها (ویرایش/حذف پس از ثبت) =================
+    def show_policy_manager(self):
+        self.set_active_nav("manage")
+        self.clear_main_frame()
+        ctk.CTkLabel(self.main_frame, text="🗂️ مدیریت بیمه‌نامه‌ها", font=self.title_font).pack(pady=(15, 5), anchor="e", padx=15)
+        ctk.CTkLabel(self.main_frame, text="ویرایش مشخصات یا حذف یک بیمه‌نامهٔ ثبت‌شده (برای اصلاح اشتباهات ورود اطلاعات).",
+                     font=self.main_font, text_color="#94A3B8").pack(anchor="e", padx=15, pady=(0, 10))
+
+        sf = ctk.CTkFrame(self.main_frame, fg_color="transparent")
+        sf.pack(fill="x", pady=2, padx=10)
+        pm_vars = {}
+        for col in ["شرکت", "بیمه‌گذار", "شماره بیمه", "دوره"]:
+            v = ctk.StringVar()
+            v.trace_add("write", lambda *args: reload())
+            pm_vars[col] = v
+            ctk.CTkEntry(sf, textvariable=v, placeholder_text=f"جستجو {col}", font=self.main_font, width=170).pack(side="right", padx=5)
+
+        cols = ("شناسه", "نوع", "شرکت", "دوره", "بیمه‌گذار", "نام پرسنل", "شماره بیمه", "حق بیمه", "وضعیت اقساط")
+        tree_f = ctk.CTkFrame(self.main_frame)
+        tree_f.pack(fill="both", expand=True, padx=10, pady=5)
+        tree = ttk.Treeview(tree_f, columns=cols, show="headings", selectmode="browse")
+        for c in cols: tree.heading(c, text=c)
+        tree.tag_configure("stripe_even", background="#0F172A")
+        tree.tag_configure("stripe_odd", background="#111C33")
+        tree.tag_configure("has_paid", foreground="#4ADE80")
+        tree.tag_configure("clean", foreground="#F1F5F9")
+        vs = ttk.Scrollbar(tree_f, orient="vertical", command=tree.yview)
+        tree.configure(yscrollcommand=vs.set)
+        vs.pack(side="right", fill="y")
+        tree.pack(side="left", fill="both", expand=True)
+        tree.bind("<Button-3>", lambda e: self.handle_right_click(e, tree))
+
+        def reload(*_):
+            for item in tree.get_children(): tree.delete(item)
+            rows = self.conn.cursor().execute('''SELECT id, type, company_name, period, person_name, personnel_name, policy_no, premium
+                                                  FROM policies ORDER BY company_name, period, id DESC LIMIT 1000''').fetchall()
+            s_comp = pm_vars["شرکت"].get().strip().lower()
+            s_name = pm_vars["بیمه‌گذار"].get().strip().lower()
+            s_pol = pm_vars["شماره بیمه"].get().strip().lower()
+            s_per = pm_vars["دوره"].get().strip().lower()
+            data_rows = []
+            for r in rows:
+                pid, ptype, comp, per, name, pers_name, pno, premium = r
+                if s_comp and s_comp not in str(comp).lower(): continue
+                if s_name and s_name not in str(name).lower(): continue
+                if s_pol and s_pol not in str(pno).lower(): continue
+                if s_per and s_per not in str(per).lower(): continue
+                statuses = [x[0] for x in self.conn.cursor().execute("SELECT status FROM installments WHERE policy_id=?", (pid,)).fetchall()]
+                if not statuses: st_label = "بدون قسط"
+                elif all(s == "پرداخت نشده" for s in statuses): st_label = "بدون پرداخت"
+                elif all(s in ("پرداخت شده", "پرداخت به پاسارگاد") for s in statuses): st_label = "تسویه کامل"
+                else: st_label = "دارای پرداخت جزئی"
+                tag2 = "clean" if st_label in ("بدون پرداخت", "بدون قسط") else "has_paid"
+                stripe = "stripe_even" if len(data_rows) % 2 == 0 else "stripe_odd"
+                vals = (pid, ptype, comp, per, name, pers_name or "", pno, to_persian_num(f"{premium:,}"), st_label)
+                tree.insert("", "end", iid=str(pid), values=vals, tags=(tag2, stripe))
+                data_rows.append(vals)
+            self.auto_resize_columns(tree, cols, data_rows)
+
+        def open_edit(event=None):
+            sel = tree.selection()
+            if not sel: return messagebox.showwarning("هشدار", "یک ردیف را انتخاب کنید.")
+            self.edit_policy_dialog(int(sel[0]))
+        tree.bind("<Double-1>", open_edit)
+
+        bf = ctk.CTkFrame(self.main_frame, fg_color="transparent")
+        bf.pack(pady=10)
+        ctk.CTkButton(bf, text="✏️ ویرایش بیمه‌نامه انتخابی", fg_color="#0284C7", font=self.main_font, command=open_edit).pack(side="right", padx=5)
+
+        def do_delete():
+            sel = tree.selection()
+            if not sel: return messagebox.showwarning("هشدار", "یک ردیف را انتخاب کنید.")
+            self.delete_policy(int(sel[0]))
+            reload()
+        ctk.CTkButton(bf, text="🗑️ حذف بیمه‌نامه انتخابی", fg_color="#E11D48", hover_color="#BE123C", font=self.main_font, command=do_delete).pack(side="right", padx=5)
+
+        reload()
+
+    def edit_policy_dialog(self, policy_id):
+        cursor = self.conn.cursor()
+        row = cursor.execute('''SELECT policy_no, person_name, company_name, premium, issue_date, period, type,
+                                 personnel_name, personnel_no, national_id FROM policies WHERE id=?''', (policy_id,)).fetchone()
+        if not row:
+            return messagebox.showerror("خطا", "بیمه‌نامه یافت نشد.")
+        (policy_no, person_name, company_name, premium, issue_date, period, ptype,
+         personnel_name, personnel_no, national_id) = row
+
+        statuses = [x[0] for x in cursor.execute("SELECT status FROM installments WHERE policy_id=?", (policy_id,)).fetchall()]
+        has_payment = any(s != "پرداخت نشده" for s in statuses)
+
+        diag = Toplevel(self)
+        diag.title(f"ویرایش بیمه‌نامه {policy_no}")
+        diag.geometry("500x700")
+        diag.configure(bg="#1E293B")
+        diag.transient(self)
+        diag.grab_set()
+
+        fields = [("شماره بیمه‌نامه:", "policy_no", policy_no), ("نام شرکت:", "company_name", company_name),
+                  ("بیمه‌گذار:", "person_name", person_name), ("نام پرسنل:", "personnel_name", personnel_name or ""),
+                  ("شماره پرسنلی:", "personnel_no", personnel_no or ""), ("شماره ملی:", "national_id", national_id or ""),
+                  ("تاریخ صدور:", "issue_date", issue_date), ("حق بیمه:", "premium", str(premium))]
+        ents = {}
+        for lbl, key, val in fields:
+            f = ctk.CTkFrame(diag, fg_color="transparent")
+            f.pack(fill="x", padx=20, pady=4)
+            ctk.CTkLabel(f, text=lbl, font=self.main_font, width=130, anchor="e").pack(side="right", padx=10)
+            e = ctk.CTkEntry(f, font=self.main_font)
+            e.insert(0, val)
+            e.pack(side="right", fill="x", expand=True)
+            ents[key] = e
+
+        ft = ctk.CTkFrame(diag, fg_color="transparent")
+        ft.pack(fill="x", padx=20, pady=4)
+        ctk.CTkLabel(ft, text="نوع بیمه:", font=self.main_font, width=130, anchor="e").pack(side="right", padx=10)
+        t_var = ctk.StringVar(value=ptype)
+        ctk.CTkOptionMenu(ft, variable=t_var, values=["ثالث", "بدنه"], font=self.main_font).pack(side="right", fill="x", expand=True)
+
+        if has_payment:
+            ctk.CTkLabel(diag, text="⚠️ این بیمه‌نامه دارای قسط پرداخت‌شده/واریزی است؛ تغییر حق بیمه به‌تنهایی اقساط را بازسازی نمی‌کند.",
+                         font=self.main_font, text_color="#FACC15", wraplength=440, justify="right").pack(padx=20, pady=(10, 0))
+
+        def save():
+            new_pno = clean_text_advanced(ents["policy_no"].get())
+            new_company = clean_text_advanced(ents["company_name"].get())
+            if not new_pno or not new_company:
+                return messagebox.showerror("خطا", "شماره بیمه و نام شرکت الزامی است.", parent=diag)
+            dup = cursor.execute("SELECT id FROM policies WHERE policy_no=? AND id != ?", (new_pno, policy_id)).fetchone()
+            if dup:
+                return messagebox.showerror("خطا", "این شماره بیمه‌نامه قبلاً برای رکورد دیگری ثبت شده است.", parent=diag)
+            new_premium = clean_number(ents["premium"].get())
+            cursor.execute('''UPDATE policies SET policy_no=?, company_name=?, person_name=?, personnel_name=?,
+                               personnel_no=?, national_id=?, issue_date=?, premium=?, type=? WHERE id=?''',
+                           (new_pno, new_company, clean_text_advanced(ents["person_name"].get()),
+                            clean_text_advanced(ents["personnel_name"].get()), clean_text_advanced(ents["personnel_no"].get()),
+                            clean_text_advanced(ents["national_id"].get()), clean_text_advanced(ents["issue_date"].get()),
+                            new_premium, t_var.get(), policy_id))
+            self.conn.commit()
+            self.log_action("ویرایش بیمه‌نامه", f"شناسه={policy_id}, شماره={new_pno}, حق‌بیمه جدید={new_premium}")
+            self.generate_excel_reports()
+            diag.destroy()
+            self.show_policy_manager()
+            messagebox.showinfo("موفق", "بیمه‌نامه ویرایش شد.")
+
+        def rebuild():
+            if has_payment:
+                return messagebox.showerror("خطا", "چون این بیمه‌نامه دارای قسط پرداخت‌شده است، اقساط قابل بازسازی خودکار نیستند.", parent=diag)
+            n_str = simpledialog.askstring("بازسازی اقساط", "تعداد اقساط جدید را وارد کنید:", initialvalue="9", parent=diag)
+            if not n_str: return
+            try:
+                n = int(convert_persian_to_english_number(n_str).strip())
+                if n < 1: raise ValueError
+            except Exception:
+                return messagebox.showerror("خطا", "تعداد قسط نامعتبر است.", parent=diag)
+            new_premium = clean_number(ents["premium"].get())
+            per_new = self.get_period(clean_text_advanced(ents["issue_date"].get()))
+            cursor.execute("DELETE FROM installments WHERE policy_id=?", (policy_id,))
+            shares = self.compute_installments(new_premium, n)
+            for i, amt in enumerate(shares, 1):
+                due = self.get_due_date(per_new, i)
+                cursor.execute("INSERT INTO installments (policy_id, inst_num, amount, due_date) VALUES (?, ?, ?, ?)", (policy_id, i, amt, due))
+            cursor.execute("UPDATE policies SET premium=?, period=? WHERE id=?", (new_premium, per_new, policy_id))
+            self.conn.commit()
+            self.log_action("بازسازی اقساط", f"شناسه={policy_id}, تعداد قسط جدید={n}, حق‌بیمه={new_premium}")
+            self.generate_excel_reports()
+            messagebox.showinfo("موفق", "اقساط بازسازی شد.", parent=diag)
+            diag.destroy()
+            self.show_policy_manager()
+
+        bf = ctk.CTkFrame(diag, fg_color="transparent")
+        bf.pack(pady=20)
+        ctk.CTkButton(bf, text="💾 ذخیره تغییرات", fg_color="#16A34A", font=self.main_font, command=save).pack(side="right", padx=5)
+        rebuild_btn = ctk.CTkButton(bf, text="🔁 بازسازی اقساط", fg_color="#9333EA", font=self.main_font, command=rebuild)
+        rebuild_btn.pack(side="right", padx=5)
+        if has_payment:
+            rebuild_btn.configure(state="disabled")
+
+    def delete_policy(self, policy_id):
+        cursor = self.conn.cursor()
+        row = cursor.execute("SELECT policy_no, company_name, period FROM policies WHERE id=?", (policy_id,)).fetchone()
+        if not row:
+            return messagebox.showerror("خطا", "بیمه‌نامه یافت نشد.")
+        policy_no, company_name, period = row
+        statuses = [x[0] for x in cursor.execute("SELECT status FROM installments WHERE policy_id=?", (policy_id,)).fetchall()]
+        has_payment = any(s != "پرداخت نشده" for s in statuses)
+
+        if has_payment:
+            if not self.verify_admin(f"بیمه‌نامه «{policy_no}» دارای قسط پرداخت‌شده/واریزی است.\nبرای حذف، رمز مدیریت را وارد کنید:"):
+                return
+            if not messagebox.askyesno("اخطار", f"بیمه‌نامه «{policy_no}» و همهٔ سوابق پرداخت آن حذف می‌شود.\nاین عمل غیرقابل بازگشت است. ادامه می‌دهید؟"):
+                return
+        else:
+            if not messagebox.askyesno("تایید حذف", f"بیمه‌نامه «{policy_no}» حذف شود؟"):
+                return
+
+        cursor.execute("DELETE FROM installments WHERE policy_id=?", (policy_id,))
+        cursor.execute("DELETE FROM policies WHERE id=?", (policy_id,))
+        self.conn.commit()
+        self.log_action("حذف بیمه‌نامه", f"شماره={policy_no}, شرکت={company_name}, دوره={period}, دارای‌پرداخت={has_payment}")
+        self.generate_excel_reports()
+        messagebox.showinfo("موفق", "بیمه‌نامه حذف شد.")
 
     # ================= تنظیمات =================
     def show_settings(self):
