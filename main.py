@@ -1034,13 +1034,33 @@ class MammutInsuranceApp(ctk.CTk):
 
         amt_card = ctk.CTkFrame(diag, fg_color="#334155", corner_radius=15, border_width=1, border_color="#16A34A")
         amt_card.pack(fill="x", padx=20, pady=(20, 10))
-        ctk.CTkLabel(amt_card, text="💰 مبلغ کل انتخابی", font=self.main_font, text_color="#CBD5E1").pack(pady=(12, 2))
-        ctk.CTkLabel(amt_card, text=f"{to_persian_num(f'{tot_amt:,}')} ریال", font=self.big_font, text_color="#4ADE80").pack(pady=(0, 12))
+        lbl_amt_title = ctk.CTkLabel(amt_card, text="💰 مبلغ کل انتخابی", font=self.main_font, text_color="#CBD5E1")
+        lbl_amt_title.pack(pady=(12, 2))
+        lbl_amt_value = ctk.CTkLabel(amt_card, text=f"{to_persian_num(f'{tot_amt:,}')} ریال", font=self.big_font, text_color="#4ADE80")
+        lbl_amt_value.pack(pady=(0, 12))
 
         mode_card = ctk.CTkFrame(diag, fg_color="#0F172A", corner_radius=12)
         mode_card.pack(fill="x", padx=20, pady=8)
         pay_mode = ctk.StringVar(value="full")
-        def toggle_ent(): ent_amt.configure(state="normal" if pay_mode.get() == "partial" else "disabled")
+
+        def refresh_amount_display():
+            if pay_mode.get() == "partial":
+                entered = clean_number(ent_amt.get())
+                remaining = tot_amt - entered
+                lbl_amt_title.configure(text="🧮 مبلغ باقیمانده پس از این پرداخت")
+                if entered <= 0:
+                    lbl_amt_value.configure(text=f"{to_persian_num(f'{tot_amt:,}')} ریال", text_color="#FACC15")
+                elif remaining <= 0:
+                    lbl_amt_value.configure(text="مبلغ از کل بیشتر است!", text_color="#FF6B6B")
+                else:
+                    lbl_amt_value.configure(text=f"{to_persian_num(f'{remaining:,}')} ریال", text_color="#FACC15")
+            else:
+                lbl_amt_title.configure(text="💰 مبلغ کل انتخابی")
+                lbl_amt_value.configure(text=f"{to_persian_num(f'{tot_amt:,}')} ریال", text_color="#4ADE80")
+
+        def toggle_ent():
+            ent_amt.configure(state="normal" if pay_mode.get() == "partial" else "disabled")
+            refresh_amount_display()
 
         frb = ctk.CTkFrame(mode_card, fg_color="transparent")
         frb.pack(fill="x", padx=10, pady=(10, 5))
@@ -1050,6 +1070,19 @@ class MammutInsuranceApp(ctk.CTk):
 
         ent_amt = ctk.CTkEntry(mode_card, font=self.main_font, placeholder_text="مبلغ پرداختی (ریال)", state="disabled")
         ent_amt.pack(pady=(0, 12), fill="x", padx=20)
+
+        def on_amt_key(event=None):
+            raw = ent_amt.get()
+            digits = clean_number(raw)
+            formatted = f"{digits:,}" if digits else ""
+            if formatted != raw:
+                ent_amt.delete(0, "end")
+                ent_amt.insert(0, formatted)
+                try: ent_amt.icursor("end")
+                except Exception: pass
+            refresh_amount_display()
+        ent_amt.bind("<KeyRelease>", on_amt_key)
+
         if active == "گروهی (شرکتی)":
             ctk.CTkLabel(mode_card, text="در پرداخت ناقصِ گروهی، مبلغ به‌ترتیب شناسه روی اقساط زیرمجموعه اعمال می‌شود؛ باقیمانده به‌صورت قسط جدید و پرداخت‌نشده باقی می‌ماند.",
                          font=self.main_font, text_color="#94A3B8", wraplength=470, justify="right").pack(padx=20, pady=(0, 12))
