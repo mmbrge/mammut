@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# داده‌های محلی و حساس اگر روزی کنار پروژه اجرا شدند
+config.json
+*.sqlite
+*.sqlite3
+Logs/
+Backups/
+Archive/
