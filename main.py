@@ -434,15 +434,58 @@ class MammutInsuranceApp(ctk.CTk):
             return split_installments_mammut(premium, n)
         return split_installments_simple(premium, n)
 
-    def auto_resize_columns(self, tree, columns, data_rows):
+    def auto_resize_columns(self, tree, columns, data_rows, sample_limit=150):
+        """عرض ستون‌ها را بر اساس محتوا تنظیم می‌کند؛ برای سرعت، فقط روی یک نمونه از ردیف‌ها اندازه‌گیری می‌شود، نه کل جدول."""
         font = tkFont.Font(family="Vazir", size=13)
+        sample = data_rows[:sample_limit]
         for col_idx, col_name in enumerate(columns):
             max_w = font.measure(col_name) + 50
             if col_name == "انتخاب": max_w = 70
-            for row in data_rows:
+            for row in sample:
                 w = font.measure(str(row[col_idx])) + 50
                 if w > max_w: max_w = w
             tree.column(col_name, width=max_w, minwidth=max_w, stretch=False)
+
+    def debounce(self, attr_name, delay_ms, func):
+        """اجرای func را delay_ms میلی‌ثانیه به تعویق می‌اندازد و زمان‌بندی قبلی (در صورت وجود) را لغو می‌کند —
+        برای جلوگیری از اجرای مکرر کوئری هنگام تایپ در فیلدهای جستجو."""
+        existing = getattr(self, attr_name, None)
+        if existing:
+            try: self.after_cancel(existing)
+            except Exception: pass
+        setattr(self, attr_name, self.after(delay_ms, func))
+
+    def status_badge(self, status):
+        return {"پرداخت شده": "🟢 پرداخت شده", "پرداخت نشده": "🔴 پرداخت نشده",
+                "پرداخت به پاسارگاد": "🟣 پرداخت به پاسارگاد"}.get(status, status)
+
+    def make_sortable(self, tree, columns):
+        """با کلیک روی هر عنوان ستون، جدول (بدون کوئری مجدد از دیتابیس) بر اساس آن ستون مرتب می‌شود."""
+        state = {"col": None, "reverse": False}
+        base_headers = list(columns)
+
+        def sort_by(col):
+            items = [(tree.set(k, col), k) for k in tree.get_children("")]
+            reverse = state["col"] == col and not state["reverse"]
+
+            def key_fn(pair):
+                val = convert_persian_to_english_number(pair[0])
+                num = re.sub(r'[^\d.\-]', '', val or "")
+                try: return (0, float(num)) if num not in ("", "-", ".") else (1, val)
+                except Exception: return (1, val)
+
+            items.sort(key=key_fn, reverse=reverse)
+            for idx, (_, k) in enumerate(items):
+                tree.move(k, "", idx)
+                tags = [t for t in tree.item(k, "tags") if not str(t).startswith("stripe_")]
+                tags.append("stripe_even" if idx % 2 == 0 else "stripe_odd")
+                tree.item(k, tags=tuple(tags))
+            state["col"], state["reverse"] = col, reverse
+            for c in base_headers: tree.heading(c, text=c)
+            tree.heading(col, text=col + (" ▼" if reverse else " ▲"))
+
+        for c in base_headers:
+            tree.heading(c, command=lambda c=c: sort_by(c))
 
     def handle_tree_click(self, event, tree):
         region = tree.identify_region(event.x, event.y)
@@ -732,12 +775,12 @@ class MammutInsuranceApp(ctk.CTk):
         # فیلتر تاریخ سررسید دوگانه
         ctk.CTkLabel(ff, text="سررسید از:", font=self.main_font).pack(side="right", padx=(20,0))
         self.due_start_var = ctk.StringVar()
-        self.due_start_var.trace_add("write", lambda *args: self.load_tables())
+        self.due_start_var.trace_add("write", lambda *args: self.debounce("_deb_dash", 250, self.load_tables))
         ctk.CTkEntry(ff, textvariable=self.due_start_var, placeholder_text="1405/01/01", font=self.main_font, width=100).pack(side="right", padx=5)
 
         ctk.CTkLabel(ff, text="تا:", font=self.main_font).pack(side="right", padx=(5,0))
         self.due_end_var = ctk.StringVar()
-        self.due_end_var.trace_add("write", lambda *args: self.load_tables())
+        self.due_end_var.trace_add("write", lambda *args: self.debounce("_deb_dash", 250, self.load_tables))
         ctk.CTkEntry(ff, textvariable=self.due_end_var, placeholder_text="1405/12/29", font=self.main_font, width=100).pack(side="right", padx=5)
 
         # ---------------- پنل جستجوی مجزا بالای جدول گروهی ----------------
@@ -746,7 +789,7 @@ class MammutInsuranceApp(ctk.CTk):
         self.comp_vars = {}
         for col in ["شرکت", "دوره", "شماره قسط"]:
             v = ctk.StringVar()
-            v.trace_add("write", lambda *args: self.load_comp_table())
+            v.trace_add("write", lambda *args: self.debounce("_deb_comp", 250, self.load_comp_table))
             self.comp_vars[col] = v
             # Placeholder با نام ستون
             ctk.CTkEntry(sf_comp, textvariable=v, placeholder_text=f"جستجو {col}", font=self.main_font, width=150, text_color="white", placeholder_text_color="gray").pack(side="right", padx=5)
@@ -768,7 +811,7 @@ class MammutInsuranceApp(ctk.CTk):
         self.det_vars = {}
         for col in ["شرکت", "بیمه‌گذار", "شماره بیمه"]:
             v = ctk.StringVar()
-            v.trace_add("write", lambda *args: self.load_det_table())
+            v.trace_add("write", lambda *args: self.debounce("_deb_det", 250, self.load_det_table))
             self.det_vars[col] = v
             # Placeholder با نام ستون
             ctk.CTkEntry(sf_det, textvariable=v, placeholder_text=f"جستجو {col}", font=self.main_font, width=180, text_color="white", placeholder_text_color="gray").pack(side="right", padx=5)
@@ -797,6 +840,8 @@ class MammutInsuranceApp(ctk.CTk):
 
         for c in self.cols_comp: self.tree_comp.heading(c, text=c)
         for c in self.cols_det: self.tree_det.heading(c, text=c)
+        self.make_sortable(self.tree_comp, self.cols_comp)
+        self.make_sortable(self.tree_det, self.cols_det)
 
         self.load_tables()
 
@@ -847,7 +892,7 @@ class MammutInsuranceApp(ctk.CTk):
             if search_per and search_per not in str(per).lower(): continue
             if search_in and search_in != str(inum): continue
 
-            vals = ("☐", comp, per, to_persian_num(str(inum)), to_persian_num(due_f), stat, to_persian_num(f"{amt:,}"))
+            vals = ("☐", comp, per, to_persian_num(str(inum)), to_persian_num(due_f), self.status_badge(stat), to_persian_num(f"{amt:,}"))
             tag = "paid" if stat == "پرداخت شده" else "pasargad" if stat == "پرداخت به پاسارگاد" else "unpaid"
             stripe = "stripe_even" if len(final_rows) % 2 == 0 else "stripe_odd"
             iid = f"{comp}|{per}|{inum}|{stat}"
@@ -890,7 +935,7 @@ class MammutInsuranceApp(ctk.CTk):
         data_rows = []
         for r in rows:
             due = to_persian_num(r[4] if r[4] else self.get_due_date(period, int(i_num)))
-            v = (r[0], r[1], due, to_persian_num(f"{r[2]:,}"), r[3])
+            v = (r[0], r[1], due, to_persian_num(f"{r[2]:,}"), self.status_badge(r[3]))
             tag = "paid" if r[3] == "پرداخت شده" else "pasargad" if r[3] == "پرداخت به پاسارگاد" else "unpaid"
             stripe = "stripe_even" if len(data_rows) % 2 == 0 else "stripe_odd"
             ts.insert("", "end", values=v, tags=(tag, stripe))
@@ -922,7 +967,7 @@ class MammutInsuranceApp(ctk.CTk):
             if s_name and s_name not in str(name).lower(): continue
             if s_pol and s_pol not in str(pol).lower(): continue
 
-            vals = ("☐", _id, comp, per, name, pol, to_persian_num(str(inum)), to_persian_num(due_f), to_persian_num(f"{amt:,}"), stat)
+            vals = ("☐", _id, comp, per, name, pol, to_persian_num(str(inum)), to_persian_num(due_f), to_persian_num(f"{amt:,}"), self.status_badge(stat))
             tag = "paid" if stat == "پرداخت شده" else "pasargad" if stat == "پرداخت به پاسارگاد" else "unpaid"
             stripe = "stripe_even" if len(final_rows) % 2 == 0 else "stripe_odd"
             self.tree_det.insert("", "end", iid=str(_id), values=vals, tags=(tag, stripe))
@@ -982,53 +1027,59 @@ class MammutInsuranceApp(ctk.CTk):
 
         diag = Toplevel(self)
         diag.title("ثبت پرداختی و تسویه")
-        diag.geometry("550x550")
+        diag.geometry("560x680")
         diag.configure(bg="#1E293B")
         diag.transient(self)
         diag.grab_set()
 
-        ctk.CTkLabel(diag, text=f"مبلغ کل انتخابی: {to_persian_num(f'{tot_amt:,}')} ریال", font=self.title_font).pack(pady=20)
+        amt_card = ctk.CTkFrame(diag, fg_color="#334155", corner_radius=15, border_width=1, border_color="#16A34A")
+        amt_card.pack(fill="x", padx=20, pady=(20, 10))
+        ctk.CTkLabel(amt_card, text="💰 مبلغ کل انتخابی", font=self.main_font, text_color="#CBD5E1").pack(pady=(12, 2))
+        ctk.CTkLabel(amt_card, text=f"{to_persian_num(f'{tot_amt:,}')} ریال", font=self.big_font, text_color="#4ADE80").pack(pady=(0, 12))
 
+        mode_card = ctk.CTkFrame(diag, fg_color="#0F172A", corner_radius=12)
+        mode_card.pack(fill="x", padx=20, pady=8)
         pay_mode = ctk.StringVar(value="full")
         def toggle_ent(): ent_amt.configure(state="normal" if pay_mode.get() == "partial" else "disabled")
 
-        frb = ctk.CTkFrame(diag, fg_color="transparent")
-        frb.pack(fill="x")
+        frb = ctk.CTkFrame(mode_card, fg_color="transparent")
+        frb.pack(fill="x", padx=10, pady=(10, 5))
         rb_partial = ctk.CTkRadioButton(frb, text="مبلغ دلخواه (ثبت کسری)", variable=pay_mode, value="partial", font=self.main_font, command=toggle_ent)
-        ctk.CTkRadioButton(frb, text="تسویه کامل", variable=pay_mode, value="full", font=self.main_font, command=toggle_ent).pack(side="right", padx=10)
+        ctk.CTkRadioButton(frb, text="✅ تسویه کامل", variable=pay_mode, value="full", font=self.main_font, command=toggle_ent).pack(side="right", padx=10)
         rb_partial.pack(side="right", padx=10)
+
+        ent_amt = ctk.CTkEntry(mode_card, font=self.main_font, placeholder_text="مبلغ پرداختی (ریال)", state="disabled")
+        ent_amt.pack(pady=(0, 12), fill="x", padx=20)
         if active == "گروهی (شرکتی)":
-            rb_partial.configure(state="disabled")  # پرداخت ناقص فقط از بخش تفکیکی ممکن است
+            ctk.CTkLabel(mode_card, text="در پرداخت ناقصِ گروهی، مبلغ به‌ترتیب شناسه روی اقساط زیرمجموعه اعمال می‌شود؛ باقیمانده به‌صورت قسط جدید و پرداخت‌نشده باقی می‌ماند.",
+                         font=self.main_font, text_color="#94A3B8", wraplength=470, justify="right").pack(padx=20, pady=(0, 12))
 
-        ent_amt = ctk.CTkEntry(diag, font=self.main_font, placeholder_text="مبلغ پرداختی (ریال)", state="disabled")
-        ent_amt.pack(pady=10, fill="x", padx=40)
-
-        ctk.CTkLabel(diag, text="نوع پرداخت:", font=self.main_font).pack(pady=(10,0))
+        details_card = ctk.CTkFrame(diag, fg_color="#0F172A", corner_radius=12)
+        details_card.pack(fill="x", padx=20, pady=8)
+        ctk.CTkLabel(details_card, text="نوع پرداخت:", font=self.main_font).pack(pady=(12, 0))
         p_type = ctk.StringVar(value="فیش بانکی")
-        cb_pt = ctk.CTkOptionMenu(diag, variable=p_type, values=["فیش بانکی", "نقدی", "چک", "کسر از حقوق"], font=self.main_font)
+        cb_pt = ctk.CTkOptionMenu(details_card, variable=p_type, values=["فیش بانکی", "نقدی", "چک", "کسر از حقوق"], font=self.main_font)
         cb_pt.pack(pady=5)
 
-        ctk.CTkLabel(diag, text="توضیحات:", font=self.main_font).pack(pady=(10,0))
-        desc = ctk.CTkEntry(diag, font=self.main_font, width=300)
-        desc.pack(pady=5)
+        ctk.CTkLabel(details_card, text="توضیحات:", font=self.main_font).pack(pady=(10, 0))
+        desc = ctk.CTkEntry(details_card, font=self.main_font, width=300)
+        desc.pack(pady=(5, 12))
 
         self.cur_receipts = [] # پشتیبانی از چند فیش
         def sel_file():
             paths = filedialog.askopenfilenames()
             if paths:
                 self.cur_receipts.extend(paths)
-                lbl_file.configure(text=f"{len(self.cur_receipts)} فایل انتخاب شد")
-        ctk.CTkButton(diag, text="انتخاب تصویر فیش/رسید", font=self.main_font, fg_color="#0284C7", command=sel_file).pack(pady=10)
-        lbl_file = ctk.CTkLabel(diag, text="سندی انتخاب نشده", font=self.main_font, text_color="gray")
-        lbl_file.pack()
+                lbl_file.configure(text=f"📎 {len(self.cur_receipts)} فایل انتخاب شد", text_color="#4ADE80")
+        receipt_card = ctk.CTkFrame(diag, fg_color="#0F172A", corner_radius=12)
+        receipt_card.pack(fill="x", padx=20, pady=8)
+        ctk.CTkButton(receipt_card, text="📎 انتخاب تصویر فیش/رسید", font=self.main_font, fg_color="#0284C7", command=sel_file).pack(pady=(12, 5))
+        lbl_file = ctk.CTkLabel(receipt_card, text="سندی انتخاب نشده", font=self.main_font, text_color="gray")
+        lbl_file.pack(pady=(0, 12))
 
         def commit():
             amt = tot_amt
             if pay_mode.get() == "partial":
-                if active == "گروهی (شرکتی)":
-                    diag.destroy()
-                    messagebox.showerror("خطا", "برای پرداخت ناقص گروهی، باید وارد بخش «ریز اقساط» شوید.")
-                    return
                 amt = clean_number(ent_amt.get())
                 if amt <= 0 or amt >= tot_amt: return messagebox.showerror("خطا", "مبلغ نامعتبر است.", parent=diag)
 
@@ -1076,7 +1127,7 @@ class MammutInsuranceApp(ctk.CTk):
             diag.destroy()
             messagebox.showinfo("موفق", "پرداختی ثبت شد.")
 
-        ctk.CTkButton(diag, text="تایید نهایی", fg_color="#16A34A", font=self.title_font, command=commit).pack(pady=20)
+        ctk.CTkButton(diag, text="✅ تایید نهایی", fg_color="#16A34A", font=self.title_font, command=commit).pack(pady=20)
 
     def mark_pasargad(self):
         active = self.tabview.get()
@@ -1473,6 +1524,7 @@ class MammutInsuranceApp(ctk.CTk):
         tree_f.pack(fill="both", expand=True, padx=10, pady=5)
         tree = ttk.Treeview(tree_f, columns=cols, show="headings")
         for c in cols: tree.heading(c, text=c)
+        self.make_sortable(tree, cols)
         tree.tag_configure("stripe_even", background="#0F172A")
         tree.tag_configure("stripe_odd", background="#111C33")
         vs = ttk.Scrollbar(tree_f, orient="vertical", command=tree.yview)
@@ -1492,7 +1544,7 @@ class MammutInsuranceApp(ctk.CTk):
                 data_rows.append(r)
             self.auto_resize_columns(tree, cols, data_rows)
 
-        search_var.trace_add("write", reload)
+        search_var.trace_add("write", lambda *args: self.debounce("_deb_log", 250, reload))
         reload()
 
     # ================= مدیریت بیمه‌نامه‌ها (ویرایش/حذف پس از ثبت) =================
@@ -1508,7 +1560,7 @@ class MammutInsuranceApp(ctk.CTk):
         pm_vars = {}
         for col in ["شرکت", "بیمه‌گذار", "شماره بیمه", "دوره"]:
             v = ctk.StringVar()
-            v.trace_add("write", lambda *args: reload())
+            v.trace_add("write", lambda *args: self.debounce("_deb_pm", 250, reload))
             pm_vars[col] = v
             ctk.CTkEntry(sf, textvariable=v, placeholder_text=f"جستجو {col}", font=self.main_font, width=170).pack(side="right", padx=5)
 
@@ -1517,6 +1569,7 @@ class MammutInsuranceApp(ctk.CTk):
         tree_f.pack(fill="both", expand=True, padx=10, pady=5)
         tree = ttk.Treeview(tree_f, columns=cols, show="headings", selectmode="browse")
         for c in cols: tree.heading(c, text=c)
+        self.make_sortable(tree, cols)
         tree.tag_configure("stripe_even", background="#0F172A")
         tree.tag_configure("stripe_odd", background="#111C33")
         tree.tag_configure("has_paid", foreground="#4ADE80")
@@ -1548,8 +1601,10 @@ class MammutInsuranceApp(ctk.CTk):
                 elif all(s in ("پرداخت شده", "پرداخت به پاسارگاد") for s in statuses): st_label = "تسویه کامل"
                 else: st_label = "دارای پرداخت جزئی"
                 tag2 = "clean" if st_label in ("بدون پرداخت", "بدون قسط") else "has_paid"
+                st_display = {"بدون قسط": "⬜ بدون قسط", "بدون پرداخت": "🔴 بدون پرداخت",
+                              "تسویه کامل": "🟢 تسویه کامل", "دارای پرداخت جزئی": "🟡 دارای پرداخت جزئی"}[st_label]
                 stripe = "stripe_even" if len(data_rows) % 2 == 0 else "stripe_odd"
-                vals = (pid, ptype, comp, per, name, pers_name or "", pno, to_persian_num(f"{premium:,}"), st_label)
+                vals = (pid, ptype, comp, per, name, pers_name or "", pno, to_persian_num(f"{premium:,}"), st_display)
                 tree.insert("", "end", iid=str(pid), values=vals, tags=(tag2, stripe))
                 data_rows.append(vals)
             self.auto_resize_columns(tree, cols, data_rows)
