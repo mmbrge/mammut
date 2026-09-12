@@ -3,3 +3,7 @@ pandas>=2.0.0
 jdatetime>=4.1.0
 openpyxl>=3.1.0
 python-docx>=1.1.0
+
+# اختیاری: فقط برای تبدیل صورت‌حساب Word به PDF لازم است.
+# نیازمند ویندوز/مک با Microsoft Word نصب‌شده (از COM automation استفاده می‌کند).
+docx2pdf>=0.1.8
